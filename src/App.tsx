@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useState } from "react";
-import Sequencer from "./components/Sequencer";
+import Steps from "./components/Steps";
 
 export default () => {
   const [steps, setSteps] = useState([
@@ -16,7 +16,7 @@ export default () => {
 
   return (
     <main>
-      <Sequencer steps={steps} />
+      <Steps steps={steps} />
     </main>
   );
 };
