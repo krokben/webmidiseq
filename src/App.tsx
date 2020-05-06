@@ -6,21 +6,19 @@ import Steps from "./components/Steps";
 const MIDI_OUTPUT_DEVICE_NAME = "Steinberg UR22mkII";
 
 export default () => {
+  const steps_ = [];
+  for (let y = 1; y < 17; y++) {
+    for (let x = 1; x < 17; x++) {
+      steps_.push({ x, y, note: "C4", active: false });
+    }
+  }
+  console.log(steps_);
   const [io, setIO] = useState({ output: {} });
-  const [bpm, setBPM] = useState(120);
+  const [launchpad, setLaunchpad] = useState({});
+  const [bpm, setBPM] = useState(1000);
   const [meter, setMeter] = useState([4, 4]);
-  const [steps, setSteps] = useState([
-    { position: 1, note: "C4" },
-    { position: 2, note: "C4" },
-    { position: 3, note: "C4" },
-    { position: 4, note: "C4" },
-    { position: 5, note: "C4" },
-    { position: 6, note: "C4" },
-    { position: 7, note: "C4" },
-    { position: 8, note: "C4" },
-  ]);
+  const [steps, setSteps] = useState(steps_);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [activePosition, setActivePosition] = useState(1);
   const oneBar = (60 / (bpm / meter[0])) * 1000;
   const [nextIncrease, setNextIncrease] = useState(oneBar);
 
@@ -36,8 +34,19 @@ export default () => {
 
   useInterval(
     () => {
-      setActivePosition(
-        activePosition === steps.length ? 1 : activePosition + 1
+      setSteps(
+        steps.map((step, index) => {
+          if (!steps.some((step) => step.active)) {
+            return index === 0 ? { ...step, active: true } : step;
+          }
+          if (step.active) {
+            return { ...step, active: false };
+          }
+          if (steps[index - 1] && steps[index - 1].active) {
+            return { ...step, active: true };
+          }
+          return step;
+        })
       );
     },
     isPlaying ? oneBar : null
@@ -45,20 +54,18 @@ export default () => {
 
   const handlePlayButtonClick = () => {
     setIsPlaying(!isPlaying);
-    setActivePosition(1);
+    setSteps(steps.map((step, index) => ({ ...step, active: false })));
   };
 
   if (isPlaying && io.output.playNote) {
-    io.output.playNote(
-      steps.find((step) => step.position === activePosition).note,
-      "all",
-      { duration: oneBar - 1 }
-    );
+    io.output.playNote(steps.find((step) => step.active).note, "all", {
+      duration: oneBar - 1,
+    });
   }
 
   return (
     <main>
-      <Steps steps={steps} activePosition={activePosition} />
+      <Steps steps={steps} />
       <button onClick={handlePlayButtonClick}>Play/Reset</button>
     </main>
   );
